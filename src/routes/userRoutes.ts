@@ -1,50 +1,88 @@
-import { UserController } from "../controller/UserController"
-import { authMiddleware } from "../middlewares/main"
+import { UserController } from "../controller/UserController";
+import { authMiddleware,rateLimitMiddleware } from "../middlewares/main";
 
-export const userRoutes = [{
+
+export const userRoutes = [
+  // Public routes
+  {
+    method: "post",
+    route: "/users",
+    controller: UserController,
+    action: "saveUser",
+    middlewares: [rateLimitMiddleware] // Prevent abuse of signups
+  },
+  {
+    method: "post",
+    route: "/users/login",
+    controller: UserController,
+    action: "loginUser",
+    middlewares: [rateLimitMiddleware] // Prevent brute force attacks
+  },
+  {
+    method: "post",
+    route: "/users/forgot-password",
+    controller: UserController,
+    action: "forgotPassword",
+    middlewares: [rateLimitMiddleware] // Prevent email/SMS flooding
+  },
+  {
+    method: "post",
+    route: "/users/verify-otp",
+    controller: UserController,
+    action: "verifyUserOTP",
+    middlewares: [rateLimitMiddleware] // Protect OTP verification
+  },
+  {
+    method: "post",
+    route: "/users/resend-otp",
+    controller: UserController,
+    action: "resendUserOtp",
+    middlewares: [rateLimitMiddleware] // Prevent email/SMS flooding
+  },
+
+  // Authenticated routes
+  {
     method: "get",
     route: "/users",
     controller: UserController,
     action: "fetchAllUsers",
-    middlewares: [authMiddleware]
-}, {
+    middlewares: [authMiddleware, rateLimitMiddleware] // Sensitive data protection
+  },
+  {
     method: "get",
     route: "/users/:id",
     controller: UserController,
-    action: "RetrieveUser"
-}, {
-    method: "post",
-    route: "/users",
+    action: "retrieveUser", 
+    middlewares: [authMiddleware]
+  },
+  {
+    method: "patch",
+    route: "/users/:id",
     controller: UserController,
-    action: "saveUser"
-}, {
+    action: "updateUser", 
+    middlewares: [authMiddleware]
+  },
+  {
     method: "delete",
     route: "/users/:id",
     controller: UserController,
     action: "removeUser",
     middlewares: [authMiddleware]
-}, {
-    method: "post",
-    route: "/users/login",
+  },
+
+  // Suggested additional routes
+  {
+    method: "get",
+    route: "/users/me",
     controller: UserController,
-    action: "loginUser"
-}, {
-    method: "post",
-    route: "/users/:id",
-    controller: UserController,
-    action: "updatePassword",
+    action: "getCurrentUser",
     middlewares: [authMiddleware]
-},
-{
-    method: "post",
-    route: "/users/forgot-password",
+  },
+  {
+    method: "patch",
+    route: "/users/:id/password",
     controller: UserController,
-    action: "forgotPassword"
-},
-{
-    method: "post",
-    route: "/users/verify-otp",
-    controller: UserController,
-    action: "verifyOTP"
-}
-]
+    action: "updatePassword", 
+    middlewares: [authMiddleware]
+  }
+];

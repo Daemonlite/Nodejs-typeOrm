@@ -19,6 +19,9 @@ export class User {
     email: string
 
     @Column()
+    phoneNumber: string
+
+    @Column()
     password: string
 
     @Column({ default: false })
@@ -37,3 +40,4 @@ export class User {
     updatedAt!: Date;
 
 }
+

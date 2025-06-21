@@ -40,3 +40,22 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     });
   }
 };
+
+// middlewares/rateLimiter.ts
+import { RateLimiterMemory } from "rate-limiter-flexible";
+
+const opts = {
+  points: 5, // 5 requests
+  duration: 60, // per 60 seconds
+};
+
+const rateLimiter = new RateLimiterMemory(opts);
+
+export const rateLimitMiddleware = async (req, res, next) => {
+  try {
+    await rateLimiter.consume(req.ip);
+    next();
+  } catch {
+    res.status(429).send("Too Many Requests");
+  }
+};

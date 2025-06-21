@@ -1,12 +1,11 @@
 import { AppDataSource } from "../data-source";
 import { NextFunction, Request, Response } from "express";
-import { User } from "../entity/User";
+import { User } from "../entities/User";
 import * as bcrypt from "bcrypt";
 
-import { OTPController } from "./otp.controller";
-import { OTPService } from "../services/otp.service";
+import { OtpController } from "./otp.controller";
 
-const otpService = new OTPService();
+const otpController = new OtpController();
 
 export class UserController {
   private userRepository = AppDataSource.getRepository(User);
@@ -19,7 +18,7 @@ export class UserController {
     return this.userRepository.find();
   }
 
-  async RetrieveUser(request: Request, response: Response, next: NextFunction) {
+  async retrieveUser(request: Request, response: Response, next: NextFunction) {
     const id = parseInt(request.params.id);
 
     const user = await this.userRepository.findOne({
@@ -33,7 +32,9 @@ export class UserController {
   }
 
   async saveUser(request: Request, response: Response, next: NextFunction) {
-    const { firstName, lastName, age, email, password } = request.body;
+    console.log('saving user')
+    const { firstName, lastName, age, email, password, phoneNumber } =
+      request.body;
 
     if (!firstName) {
       throw new Error("first name is required");
@@ -45,6 +46,12 @@ export class UserController {
       throw new Error("email is required");
     } else if (!password) {
       throw new Error("password is required");
+    } else if (!phoneNumber) {
+      throw new Error("phone number is required");
+    }
+
+    if (await this.userRepository.findOneBy({ email })) {
+      throw new Error("user already exists with this email");
     }
 
     const hashpw = await bcrypt.hash(password, 10);
@@ -55,10 +62,44 @@ export class UserController {
       age,
       email,
       password: hashpw,
+      phoneNumber,
     });
 
-    return this.userRepository.save(user);
+    await otpController.sendOtp(user.email, null);
+
+    this.userRepository.save(user);
+
+    return {
+      message: "user has been created successfully",
+      user: user,
+    };
   }
+
+async updateUser(request: Request, response: Response, next: NextFunction) {
+    const id = parseInt(request.params.id);
+    const data = request.body;
+
+    if (!id) {
+      throw new Error("id is required");
+    }
+
+    // Remove password from data if present
+    if (data.password) {
+      delete data.password;
+    }
+
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new Error("user not found");
+    }
+
+    await this.userRepository.update({ id }, { ...data });
+
+    return {
+      message: "user has been updated successfully",
+    };
+}
 
   async loginUser(request: Request, response: Response, next: NextFunction) {
     const { email, password } = request.body;
@@ -86,20 +127,16 @@ export class UserController {
     }
 
     if (user.is2faEnabled) {
-        const res = await otpService.sendOTP(user.email, {
-        transport: 'email'
-        });
+      const res = await otpController.sendOtp(user.email, user.phoneNumber);
 
-        return res
+      return res;
     } else {
-        return {
+      return {
         message: "login successful",
         user: user,
-        };
+      };
     }
-
   }
-
 
   async removeUser(request: Request, response: Response, next: NextFunction) {
     const id = parseInt(request.params.id);
@@ -115,8 +152,11 @@ export class UserController {
     return "user has been removed";
   }
 
-
-async forgotPassword(request: Request, response: Response, next: NextFunction) {
+  async forgotPassword(
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) {
     const { email } = request.body;
 
     if (!email) {
@@ -129,14 +169,17 @@ async forgotPassword(request: Request, response: Response, next: NextFunction) {
       throw new Error("user not found");
     }
 
-    const otp = await otpService.generateOTP(email, 'reset');
-    return {
-        message: "OTP has been sent to your email",
-    }
-}
 
-async verifyOTP(request: Request, response: Response, next: NextFunction) {
+    await otpController.sendOtp(user.email, null);
+
+    return {
+      message: "OTP has been sent to your email",
+    };
+  }
+
+  async verifyUserOTP(request: Request, response: Response, next: NextFunction) {
     const { email, code } = request.body;
+    console.log(`user entered code is ${code}`)
 
     if (!email) {
       throw new Error("email is required");
@@ -150,21 +193,47 @@ async verifyOTP(request: Request, response: Response, next: NextFunction) {
       throw new Error("user not found");
     }
 
-    const isCodeValid = await otpService.verifyOTP(email, code,'verification');
+    const isCodeValid = await otpController.verifyOtp(user.email, null, code);
 
-    if (!isCodeValid) {
+    console.log(`isCodeValid is ${isCodeValid}`)
+
+    if (isCodeValid === false) {
       throw new Error("invalid code");
-    }
+    } else if (isCodeValid === true) {
 
-    user.isVerified = true;
-    this.userRepository.save(user);
-    return {
+      user.isVerified = true;
+      this.userRepository.save(user);
+
+      return {
       message: "user has been verified",
       user: user,
+    };
+
+    } else {
+      throw new Error("Otp has expired");
     }
 
+  }
 
-}
+  async resendUserOtp(request: Request, response: Response, next: NextFunction) {
+    const { email } = request.body;
+
+    if (!email) {
+      throw new Error("email is required");
+    }
+
+    const user = await this.userRepository.findOneBy({ email });
+
+    if (!user) {
+      throw new Error("user not found");
+    }
+
+    await otpController.resendOtp(user.email, null);
+
+    return {
+      message: "OTP has been sent to your email",
+    };
+  }
 
   async updatePassword(
     request: Request,
