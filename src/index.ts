@@ -7,6 +7,7 @@ import { User } from "./entities/User"
 import * as morgan from "morgan"
 import { port } from "./config"
 import { handleError } from "./middlewares/main"
+import * as cors from "cors"
 
 
 AppDataSource.initialize().then(async () => {
@@ -32,6 +33,7 @@ AppDataSource.initialize().then(async () => {
     })
 
     app.use(handleError)
+    app.use(cors())
 
     // start express server
     app.listen(port)

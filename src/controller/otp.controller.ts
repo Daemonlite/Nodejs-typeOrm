@@ -99,4 +99,5 @@ export class OtpController {
       await sendOtpEmail(email, otpCode);
     }
   }
+  
 }

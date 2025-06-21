@@ -84,5 +84,19 @@ export const userRoutes = [
     controller: UserController,
     action: "updatePassword", 
     middlewares: [authMiddleware]
+  },
+  {
+    method: "patch",
+    route: "/users/:id/2fa",
+    controller: UserController,
+    action: "enable2fa", 
+    middlewares: [authMiddleware]
+  },
+  {
+    method: "post",
+    route: "/users/:id/2fa/verify",
+    controller: UserController,
+    action: "verify2fa", 
+    middlewares: [authMiddleware]
   }
 ];

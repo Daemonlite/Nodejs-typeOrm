@@ -4,6 +4,7 @@ import { User } from "../entities/User";
 import * as bcrypt from "bcrypt";
 
 import { OtpController } from "./otp.controller";
+import * as jwt from 'jsonwebtoken';
 
 const otpController = new OtpController();
 
@@ -101,6 +102,7 @@ async updateUser(request: Request, response: Response, next: NextFunction) {
     };
 }
 
+
   async loginUser(request: Request, response: Response, next: NextFunction) {
     const { email, password } = request.body;
 
@@ -126,16 +128,64 @@ async updateUser(request: Request, response: Response, next: NextFunction) {
       throw new Error("user is not verified");
     }
 
-    if (user.is2faEnabled) {
-      const res = await otpController.sendOtp(user.email, user.phoneNumber);
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY!, {
+      expiresIn: "1d",
+    });
 
-      return res;
+    if (user.is2faEnabled) {
+      const res = await otpController.sendOtp(user.email,null);
+
+      return {
+        "message": "2FA has been enabled for this user, please check your email for OTP",
+        "res": res
+      };
     } else {
       return {
         message: "login successful",
         user: user,
+        token: token
+
       };
     }
+  }
+
+  async verify2fa(request: Request, response: Response, next: NextFunction) {
+    const id = parseInt(request.params.id);
+    const { code } = request.body;
+
+    if (!id) {
+      throw new Error("id is required");
+    } else if (!code) {
+      throw new Error("code is required");
+    }
+
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new Error("user not found");
+    }
+
+    if (!user.is2faEnabled) {
+      throw new Error("2FA is not enabled for this user");
+    }
+
+    const isCodeValid = await otpController.verifyOtp(user.email,null,code);
+
+    if (!isCodeValid) {
+      throw new Error("invalid code");
+    } else {
+      
+    }
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY!, {
+      expiresIn: "1d",
+    });
+
+    return ({
+      message: "2FA verification successful",
+      user: user,
+      token: token
+    })
   }
 
   async removeUser(request: Request, response: Response, next: NextFunction) {
@@ -268,5 +318,23 @@ async updateUser(request: Request, response: Response, next: NextFunction) {
       message: "password updated successfully",
       user: user,
     });
+  }
+
+  async enable2fa(request: Request, response: Response, next: NextFunction) {
+    const id = parseInt(request.params.id);
+
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new Error("user not found");
+    }
+
+    user.is2faEnabled = true;
+    this.userRepository.save(user);
+
+    return {
+      message: "2fa has been enabled",
+      user: user,
+    };
   }
 }
