@@ -1,45 +1,49 @@
-import * as express from "express"
-import * as bodyParser from "body-parser"
-import { Request, Response } from "express"
-import { AppDataSource } from "./data-source"
-import  Routes  from "./routes/index"
-import { User } from "./entities/User"
-import * as morgan from "morgan"
-import { port } from "./config"
-import { handleError } from "./middlewares/main"
-import * as cors from "cors"
-
+import * as express from "express";
+import * as bodyParser from "body-parser";
+import { Request, Response, NextFunction } from "express";
+import { AppDataSource } from "./data-source";
+import Routes from "./routes/index";
+import * as morgan from "morgan";
+import { port } from "./config";
+import { handleError } from "./middlewares/main";
+import * as cors from "cors";
 
 AppDataSource.initialize().then(async () => {
+    const app = express();
 
-    // create express app
-    const app = express()
-    app.use(morgan("combined"))
-    app.use(bodyParser.json())
+    // 1. Middleware ordering is important - these should come first
+    app.use(cors()); // Enable CORS first
+    app.use(morgan("combined")); // Logging
+    app.use(bodyParser.json()); // JSON body parsing
+    app.use(express.urlencoded({ extended: false })); // URL-encoded body parsing
 
-    // register express routes from defined application routes
+    // 2. Proper route registration with middlewares
     Routes.forEach(route => {
-        (app as any)[route.method](route.route, async (req: Request, res: Response, next: Function) => {
-            try {
-                const result = await (new (route.controller as any))[route.action](req, res, next)
-                res.json(result)
-                if (result instanceof Promise) {
-                    result.then(result => result !== null && result !== undefined ? res.send(result) : undefined)
+        const routeMiddlewares = route.middlewares || []; // Default to empty array if no middlewares
+        
+        (app as any)[route.method](
+            route.route,
+            ...routeMiddlewares, // Spread the middlewares
+            async (req: Request, res: Response, next: NextFunction) => {
+                try {
+                    const controllerInstance = new (route.controller as any)();
+                    const result = await controllerInstance[route.action](req, res, next);
+                    
+                    if (result !== null && result !== undefined) {
+                        return res.json(result);
+                    }
+                } catch (error) {
+                    next(error);
                 }
-            } catch (error) {
-                next(error)
             }
-        })
-    })
+        );
+    });
 
-    app.use(handleError)
-    app.use(cors())
+    // 3. Error handling middleware comes last
+    app.use(handleError);
 
-    // start express server
-    app.listen(port)
+    app.listen(port, () => {
+        console.log(`Express server has started on port ${port}`);
+    });
 
-
-
-    console.log(`Express server has started on port ${port}`)
-
-}).catch(error => console.log(error))
+}).catch(error => console.log(error));
