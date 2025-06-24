@@ -3,37 +3,34 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   ManyToOne,
-  CreateDateColumn, 
+  CreateDateColumn,
   UpdateDateColumn,
-  OneToMany
+  OneToMany,
 } from "typeorm";
 import { User } from "./User";
 import { Comment } from "./Comments";
 
 @Entity()
-export class Post {  
+export class Post {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number;
+  @Column()
+  title: string;
 
-    @Column()
-    title: string;
+  @Column()
+  content: string;
 
-    @Column()
-    content: string;
+  // Relationship - Many Posts belong to One User
+  @ManyToOne(() => User, (user) => user.posts)
+  author: User;
 
-    // Relationship - Many Posts belong to One User
-    @ManyToOne(() => User, (user) => user.posts)
-    author: User; 
+  @OneToMany(() => Comment, (comment) => comment.post)
+  comments: Comment[];
 
-    @OneToMany(()=>Comment,(comment)=>comment.post)
-    comments:Comment[]
+  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  createdAt: Date;
 
-    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
-    createdAt: Date;
-
-    @UpdateDateColumn( { type: "timestamp", default: () => "CURRENT_TIMESTAMP"} )
-    updatedAt: Date;
-
-     
+  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  updatedAt: Date;
 }

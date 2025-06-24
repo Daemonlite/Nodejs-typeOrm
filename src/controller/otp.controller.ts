@@ -6,7 +6,7 @@ import { sendSms, sendOtpEmail } from "../utils";
 export class OtpController {
   private otpRepository = AppDataSource.getRepository(Otp);
 
- public async generateOtp(email: string | null, phoneNumber: string | null) {
+  public async generateOtp(email: string | null, phoneNumber: string | null) {
     if (!email && !phoneNumber) {
       throw new Error("Either email or phoneNumber must be provided");
     }
@@ -49,7 +49,7 @@ export class OtpController {
     }
 
     const otp = await this.otpRepository.findOne({ where: whereCondition });
-    
+
     if (!otp) {
       return null;
     }
@@ -57,7 +57,7 @@ export class OtpController {
     return {
       code: otp.code,
       expiresAt: otp.expiresAt,
-      ...otp // Include all other properties if needed later
+      ...otp, // Include all other properties if needed later
     };
   }
 
@@ -99,5 +99,4 @@ export class OtpController {
       await sendOtpEmail(email, otpCode);
     }
   }
-  
 }

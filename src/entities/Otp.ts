@@ -1,25 +1,31 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
 @Entity()
 export class Otp {
-    @PrimaryGeneratedColumn()
-    id: number
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({ nullable: true })
-    phoneNumber: string
+  @Column({ nullable: true })
+  phoneNumber: string;
 
-    @Column({ nullable: true })
-    email: string
+  @Column({ nullable: true })
+  email: string;
 
-    @Column()
-    code: string
+  @Column()
+  code: string;
 
-    @Column()
-    expiresAt: Date
+  @Column()
+  expiresAt: Date;
 
-    @CreateDateColumn()
-    createdAt: Date
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

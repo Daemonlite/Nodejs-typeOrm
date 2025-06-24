@@ -21,7 +21,7 @@ export class CommentsController {
       return response
         .status(400)
         .json(createResponse(false, "content is required"));
-    } 
+    }
 
     if (!postId) {
       return response
@@ -64,12 +64,16 @@ export class CommentsController {
 
     const comment = await this.commentRepository.findOneBy({ id });
 
-    if (!comment){
-        return response.status(404).json(createResponse(false,"comment not found"))
+    if (!comment) {
+      return response
+        .status(404)
+        .json(createResponse(false, "comment not found"));
     }
 
-    await this.commentRepository.remove(comment)
+    await this.commentRepository.remove(comment);
 
-    return response.status(200).json(createResponse(true,"comment removed successfully"))
+    return response
+      .status(200)
+      .json(createResponse(true, "comment removed successfully"));
   }
 }

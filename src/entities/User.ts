@@ -1,65 +1,67 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,OneToMany } from "typeorm"
-import { Post } from "./Posts"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Post } from "./Posts";
 export enum Status {
-    ACTIVE = "active",
-    INACTIVE = "inactive"
+  ACTIVE = "active",
+  INACTIVE = "inactive",
 }
 
-import { Comment } from "./Comments"
+import { Comment } from "./Comments";
 
 @Entity()
 export class User {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number
+  @Column()
+  firstName: string;
 
-    @Column()
-    firstName: string
+  @Column()
+  lastName: string;
 
-    @Column()
-    lastName: string
+  @Column()
+  age: number;
 
-    @Column()
-    age: number
+  @Column()
+  email: string;
 
-    @Column()
-    email: string
+  @Column()
+  phoneNumber: string;
 
-    @Column()
-    phoneNumber: string
+  @Column()
+  password: string;
 
-    @Column()
-    password: string
+  @Column({ default: false })
+  isAdmin!: boolean;
 
-    @Column({ default: false })
-    isAdmin!: boolean;
+  @Column({ default: false })
+  isVerified!: boolean;
 
-    @Column({ default: false })
-    isVerified!: boolean;
+  @Column({ default: false })
+  is2faEnabled!: boolean;
 
-    @Column({ default: false })
-    is2faEnabled!: boolean;
+  @OneToMany(() => Comment, (comment) => comment.author)
+  comments: Comment[];
 
-    @OneToMany(() => Comment, (comment) => comment.author)
-    comments: Comment[]
+  @Column({
+    type: "enum",
+    enum: Status,
+    default: Status.ACTIVE,
+  })
+  status: Status;
 
-    @Column({
-        type: 'enum',
-        enum: Status,
-        default: Status.ACTIVE
-    })
-    status: Status
+  @OneToMany(() => Post, (post) => post.author)
+  posts: Post[];
 
-    @OneToMany(() => Post, (post) => post.author)
-    posts: Post[]
-    
+  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  createdAt!: Date;
 
-
-    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt!: Date;
-
-    @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updatedAt!: Date;
-
+  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  updatedAt!: Date;
 }
-
