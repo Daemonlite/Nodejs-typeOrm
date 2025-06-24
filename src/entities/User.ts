@@ -5,6 +5,8 @@ export enum Status {
     INACTIVE = "inactive"
 }
 
+import { Comment } from "./Comments"
+
 @Entity()
 export class User {
 
@@ -38,6 +40,9 @@ export class User {
     @Column({ default: false })
     is2faEnabled!: boolean;
 
+    @OneToMany(() => Comment, (comment) => comment.author)
+    comments: Comment[]
+
     @Column({
         type: 'enum',
         enum: Status,
@@ -47,6 +52,8 @@ export class User {
 
     @OneToMany(() => Post, (post) => post.author)
     posts: Post[]
+    
+
 
     @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt!: Date;

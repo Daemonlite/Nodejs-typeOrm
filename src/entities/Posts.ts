@@ -4,9 +4,11 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   CreateDateColumn, 
-  UpdateDateColumn
+  UpdateDateColumn,
+  OneToMany
 } from "typeorm";
 import { User } from "./User";
+import { Comment } from "./Comments";
 
 @Entity()
 export class Post {  
@@ -23,6 +25,9 @@ export class Post {
     // Relationship - Many Posts belong to One User
     @ManyToOne(() => User, (user) => user.posts)
     author: User; 
+
+    @OneToMany(()=>Comment,(comment)=>comment.post)
+    comments:Comment[]
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     createdAt: Date;
