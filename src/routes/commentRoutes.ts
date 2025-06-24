@@ -17,5 +17,5 @@ export const commentRoutes = [
         controller: CommentsController,
         action: "removeComment",
         middlwares: [authMiddleware]
-    }
+    },
 ]

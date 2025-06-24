@@ -13,26 +13,38 @@ export class PostsController {
   response: Response,
   next: NextFunction
 ) {
-  const posts = await this.postRepository
-  .createQueryBuilder("post")
-  .leftJoinAndSelect("post.author", "author")
-  .select([
-    "post.id",
-    "post.title",
-    "post.content",
-    "post.createdAt",
-    "post.updatedAt",
-    "author.id",
-    "author.firstName",
-    "author.lastName", 
-  ])
-  .orderBy("post.createdAt", "DESC")
-  .getMany();
+  const posts = await this.postRepository.find({
+    relations: ['author','comments','comments.author'],
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+      author: {
+        id: true,
+        firstName: true,
+        lastName: true
+      },
+      comments: {
+        content: true,
+        createdAt: true,
+        author: {
+          firstName: true,
+          lastName: true
+        }
+      }
+    },
+    order: { createdAt: 'DESC' },
+    // take: 20 // example pagination
+  });
 
   return response
     .status(200)
     .json(createResponse(true, "Posts fetched successfully", posts));
+  
 }
+  
 
   async retrievePostsById(
   request: Request,
@@ -41,22 +53,32 @@ export class PostsController {
 ) {
   const id = parseInt(request.params.id);
 
-  const post = await this.postRepository
-  .createQueryBuilder("post")
-  .leftJoinAndSelect("post.author", "author")
-  .select([
-    "post.id",
-    "post.title",
-    "post.content",
-    "post.createdAt",
-    "post.updatedAt",
-    "author.id",
-    "author.firstName",
-    "author.lastName", 
-  ])
-  .orderBy("post.createdAt", "DESC")
-  .where("post.id = :id", { id })
-  .getMany();
+  const post = await this.postRepository.find({
+    where: { id },
+    relations: ['author', 'comments', 'comments.author'],
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+      author: {
+        id: true,
+        firstName: true,
+        lastName: true
+      },
+      comments:{
+        content: true,
+        createdAt: true,
+        author: {
+          firstName: true,
+          lastName: true
+        }
+      }
+    },
+    order: { createdAt: 'DESC' },
+  })
+
 
   if (!post) {
     return response
@@ -75,35 +97,52 @@ export class PostsController {
   response: Response,
   next: NextFunction
 ) {
-  const id = parseInt(request.params.id);
+  try {
+    const id = parseInt(request.params.id);
+    
+    if (isNaN(id)) {
+      return response.status(400).json(createResponse(false, "Invalid user ID"));
+    }
 
-  const user = await this.userRepository.findOneBy({ id });
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) {
+      return response.status(404).json(createResponse(false, "User not found"));
+    }
 
-  if (!user) {
-    return response
-      .status(404)
-      .json(createResponse(false, "User not found"));
+    const posts = await this.postRepository.find({
+      where: { author: { id } },
+      relations: ['author', 'comments', 'comments.author'],
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          id: true,
+          firstName: true,
+          lastName: true
+        },
+        comments: {
+          content: true,
+          createdAt: true,
+          author: {
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      order: { createdAt: 'DESC' },
+    });
+
+    return response.status(200).json({
+      success: true,
+      message: "Posts fetched successfully",
+      data: posts
+    });
+  } catch (error) {
+    next(error); // pass to error handler middleware
   }
-
-  const posts = await this.postRepository.createQueryBuilder("post")
-  .leftJoinAndSelect("post.author", "author")
-  .select([
-    "post.id",
-    "post.title",
-    "post.content",
-    "post.createdAt",
-    "post.updatedAt",
-    "author.id",
-    "author.firstName",
-    "author.lastName",
-  ])
-  .where("author.id = :id", { id })
-  .orderBy("post.createdAt", "DESC")
-  .getMany();
-
-  return response
-    .status(200)
-    .json(createResponse(true, "Posts fetched successfully", posts));
 }
 
   async createPost(request: Request, response: Response, next: NextFunction) {

@@ -21,10 +21,12 @@ export class CommentsController {
       return response
         .status(400)
         .json(createResponse(false, "content is required"));
-    } else if (!postId) {
+    } 
+
+    if (!postId) {
       return response
         .status(400)
-        .json(createResponse(false, "comment added successfully"));
+        .json(createResponse(false, "post id is required"));
     }
 
     const post = await this.postRepository.findOneBy({ id: postId });
