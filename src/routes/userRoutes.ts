@@ -46,7 +46,7 @@ export const userRoutes = [
     route: "/users",
     controller: UserController,
     action: "fetchAllUsers",
-    middlewares: [authMiddleware, rateLimitMiddleware] // Sensitive data protection
+    middlewares: [authMiddleware, rateLimitMiddleware] 
   },
   {
     method: "get",

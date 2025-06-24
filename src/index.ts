@@ -30,9 +30,10 @@ AppDataSource.initialize().then(async () => {
                     const result = await controllerInstance[route.action](req, res, next);
                     
                     if (result !== null && result !== undefined) {
-                        return res.json(result);
+                        return result;
                     }
                 } catch (error) {
+                    console.log('inside error catch');
                     next(error);
                 }
             }

@@ -22,3 +22,7 @@ export interface NotificationResponse {
     info: string;
     data?: any;
 }
+
+export function createResponse(success: boolean, info: string, data?: any): NotificationResponse {
+    return { success, info, data };
+}

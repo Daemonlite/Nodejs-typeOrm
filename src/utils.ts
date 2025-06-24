@@ -6,7 +6,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const apiKey = process.env.SMS_KEY;
-console.log(apiKey)
 
 if (!apiKey) {
   console.error("SMS_KEY is not defined in environment variables");

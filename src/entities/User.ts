@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,OneToMany } from "typeorm"
+import { Post } from "./Posts"
+export enum Status {
+    ACTIVE = "active",
+    INACTIVE = "inactive"
+}
 
 @Entity()
 export class User {
@@ -32,6 +37,16 @@ export class User {
 
     @Column({ default: false })
     is2faEnabled!: boolean;
+
+    @Column({
+        type: 'enum',
+        enum: Status,
+        default: Status.ACTIVE
+    })
+    status: Status
+
+    @OneToMany(() => Post, (post) => post.author)
+    posts: Post[]
 
     @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt!: Date;

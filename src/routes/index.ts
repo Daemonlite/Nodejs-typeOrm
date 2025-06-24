@@ -1,7 +1,9 @@
 import { userRoutes } from './userRoutes'
+import { postRoutes } from './PostRoutes'
 
 const Routes = [
-    ...userRoutes
+    ...userRoutes,
+    ...postRoutes
 ]
 
 export default Routes
