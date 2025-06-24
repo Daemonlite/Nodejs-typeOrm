@@ -9,56 +9,102 @@ export class PostsController {
   private userRepository = AppDataSource.getRepository(User);
 
   async fetchAllPosts(
-    request: Request,
-    response: Response,
-    next: NextFunction
-  ) {
-    const posts = await this.postRepository.find();
-    return response
-      .status(200)
-      .json(createResponse(true, "Posts fetched successfully", posts));
-  }
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const posts = await this.postRepository
+  .createQueryBuilder("post")
+  .leftJoinAndSelect("post.author", "author")
+  .select([
+    "post.id",
+    "post.title",
+    "post.content",
+    "post.createdAt",
+    "post.updatedAt",
+    "author.id",
+    "author.firstName",
+    "author.lastName", 
+  ])
+  .orderBy("post.createdAt", "DESC")
+  .getMany();
+
+  return response
+    .status(200)
+    .json(createResponse(true, "Posts fetched successfully", posts));
+}
 
   async retrievePostsById(
-    request: Request,
-    response: Response,
-    next: NextFunction
-  ) {
-    const id = parseInt(request.params.id);
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const id = parseInt(request.params.id);
 
-    const post = await this.postRepository.findOneBy({ id });
+  const post = await this.postRepository
+  .createQueryBuilder("post")
+  .leftJoinAndSelect("post.author", "author")
+  .select([
+    "post.id",
+    "post.title",
+    "post.content",
+    "post.createdAt",
+    "post.updatedAt",
+    "author.id",
+    "author.firstName",
+    "author.lastName", 
+  ])
+  .orderBy("post.createdAt", "DESC")
+  .where("post.id = :id", { id })
+  .getMany();
 
-    if (!post) {
-      return response.status(404).json(createResponse(false, "Post not found"));
-    }
-
+  if (!post) {
     return response
-      .status(200)
-      .json(createResponse(true, "Post fetched successfully", post));
+      .status(404)
+      .json(createResponse(false, "Post not found"));
   }
+
+  return response
+    .status(200)
+    .json(createResponse(true, "Post fetched successfully", post));
+}
+
 
   async fetchUserPost(
-    request: Request,
-    response: Response,
-    next: NextFunction
-  ) {
-    const id = parseInt(request.params.id);
+  request: Request,
+  response: Response,
+  next: NextFunction
+) {
+  const id = parseInt(request.params.id);
 
-    const user = await this.userRepository.findOneBy({ id });
+  const user = await this.userRepository.findOneBy({ id });
 
-    if (!user) {
-      return response.status(404).json(createResponse(false, "User not found"));
-    }
-
-    const posts = await this.postRepository.find({
-      where: { id: user.id },
-      relations: ["author"],
-    });
-
+  if (!user) {
     return response
-      .status(200)
-      .json(createResponse(true, "Posts fetched successfully", posts));
+      .status(404)
+      .json(createResponse(false, "User not found"));
   }
+
+  const posts = await this.postRepository.createQueryBuilder("post")
+  .leftJoinAndSelect("post.author", "author")
+  .select([
+    "post.id",
+    "post.title",
+    "post.content",
+    "post.createdAt",
+    "post.updatedAt",
+    "author.id",
+    "author.firstName",
+    "author.lastName",
+  ])
+  .where("author.id = :id", { id })
+  .orderBy("post.createdAt", "DESC")
+  .getMany();
+
+  return response
+    .status(200)
+    .json(createResponse(true, "Posts fetched successfully", posts));
+}
 
   async createPost(request: Request, response: Response, next: NextFunction) {
     const { title, content } = request.body;
@@ -73,11 +119,6 @@ export class PostsController {
         .json(createResponse(false, "content is required"));
     }
 
-    const existingPost = await this.postRepository.findOneBy({ title });
-
-    if (existingPost){
-        return response.status(400).json(createResponse(false, "Post already exists with the same title"));
-    }
 
     const post = new Post();
     post.title = title;

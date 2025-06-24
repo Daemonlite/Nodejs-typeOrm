@@ -18,22 +18,20 @@ export class UserController {
     response: Response,
     next: NextFunction
   ) {
-    const users = await this.userRepository.find();
-    return createResponse(true, "Users fetched successfully", users);
+    const users = await this.userRepository.find({});
+    return response.status(200).json( createResponse(true, "Users fetched successfully", users));
   }
 
   async retrieveUser(request: Request, response: Response, next: NextFunction) {
     const id = parseInt(request.params.id);
 
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
+    const user = await this.userRepository.findOneBy({id});
 
     if (!user) {
       const rs = createResponse(false, "User not found");
       return response.status(404).json(rs);
     }
-    return createResponse(true, "User fetched successfully", user);
+    return response.status(200).json( createResponse(true, "User fetched successfully", this.sanitizeUser(user)));
   }
 
   async saveUser(request: Request, response: Response, next: NextFunction) {

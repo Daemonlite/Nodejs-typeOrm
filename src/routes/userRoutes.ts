@@ -37,7 +37,7 @@ export const userRoutes = [
     route: "/users/resend-otp",
     controller: UserController,
     action: "resendUserOtp",
-    middlewares: [rateLimitMiddleware] // Prevent email/SMS flooding
+    middlewares: [authMiddleware] // Prevent email/SMS flooding
   },
 
   // Authenticated routes
