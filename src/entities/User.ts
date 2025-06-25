@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from "typeorm";
 import { Post } from "./Posts";
+
 export enum Status {
   ACTIVE = "active",
   INACTIVE = "inactive",
